@@ -1,0 +1,945 @@
+<!doctype html>
+<html lang="th">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<style>html{color-scheme:dark}body{margin:0}img{max-width:100%}[hidden]{display:none!important}</style>
+<title>Aurora Atlas</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Chakra+Petch:wght@500;600;700&family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Sans+Thai:wght@400;500;600&display=swap">
+<style>
+/* Concept: a night-sky observation log. Aurora washes the sky behind everything;
+   every map is a small constellation of real places drawn on a graticule. */
+:root {
+  --night-0: #04070f;
+  --night-1: #091225;
+  --night-2: #0f1b36;
+  --ink: #e9f2ff;
+  --ink-2: #a9bad6;
+  --ink-3: #8296ba;
+  --line: rgba(160, 200, 255, 0.16);
+  --line-strong: rgba(160, 200, 255, 0.34);
+  --panel: rgba(11, 21, 42, 0.72);
+  --green: #5cf2b0;
+  --teal: #3dd6e8;
+  --violet: #9d82ff;
+  --rose: #f08ad8;
+  --on-green: #03150f;
+  --font-display: 'Chakra Petch', 'Noto Sans Thai', 'Sarabun', sans-serif;
+  --font-body: 'IBM Plex Sans Thai', 'Noto Sans Thai', 'Sarabun', system-ui, sans-serif;
+  --font-mono: 'IBM Plex Mono', ui-monospace, Menlo, Consolas, monospace;
+  color-scheme: dark;
+}
+
+* { box-sizing: border-box; }
+html { scroll-behavior: smooth; }
+body {
+  background: var(--night-0);
+  color: var(--ink);
+  font: 400 16px/1.7 var(--font-body);
+  padding-left: max(16px, env(safe-area-inset-left, 0px));
+  padding-right: max(16px, env(safe-area-inset-right, 0px));
+  padding-block: 0 56px;
+  position: relative;
+  min-height: 100%;
+  overflow-wrap: break-word;
+}
+a { color: var(--green); text-underline-offset: 3px; }
+h1, h2, h3 { font-family: var(--font-display); font-weight: 600; line-height: 1.25; margin: 0; text-wrap: balance; }
+p { margin: 0; }
+ul { margin: 0; padding: 0; list-style: none; }
+.mono { font-family: var(--font-mono); letter-spacing: 0.04em; }
+:focus-visible { outline: 2px solid var(--teal); outline-offset: 3px; border-radius: 6px; }
+
+/* ---------- sky ---------- */
+.sky {
+  position: fixed; inset: 0; z-index: 0; pointer-events: none; overflow: hidden;
+  background: linear-gradient(180deg, var(--night-0) 0%, var(--night-1) 55%, #0b1a33 100%);
+}
+#stars { position: absolute; inset: 0; width: 100%; height: 100%; }
+.aurora { position: absolute; inset: 0 0 35% 0; mask-image: linear-gradient(180deg, #000 0%, #000 55%, transparent 100%); -webkit-mask-image: linear-gradient(180deg, #000 0%, #000 55%, transparent 100%); }
+.band {
+  position: absolute; left: -25%; width: 150%; height: 46vh; top: 0;
+  filter: blur(54px); opacity: 0.42; mix-blend-mode: screen;
+  animation: drift 28s ease-in-out infinite alternate;
+}
+.band.b1 { background: linear-gradient(90deg, transparent 0%, rgba(92,242,176,0.9) 24%, rgba(61,214,232,0.8) 50%, rgba(157,130,255,0.6) 76%, transparent 100%); }
+.band.b2 { top: 6vh; height: 34vh; opacity: 0.32; animation-duration: 36s; animation-direction: alternate-reverse; background: linear-gradient(90deg, transparent 5%, rgba(157,130,255,0.8) 30%, rgba(240,138,216,0.55) 58%, rgba(61,214,232,0.5) 82%, transparent 100%); }
+.band.b3 { top: -4vh; height: 26vh; opacity: 0.3; animation-duration: 22s; background: linear-gradient(90deg, transparent 10%, rgba(61,214,232,0.7) 38%, rgba(92,242,176,0.85) 66%, transparent 96%); }
+.rays {
+  position: absolute; left: -10%; width: 120%; top: 3vh; height: 40vh; opacity: 0.22; filter: blur(5px); mix-blend-mode: screen;
+  background: repeating-linear-gradient(90deg, rgba(92,242,176,0) 0 22px, rgba(160,255,220,0.55) 22px 26px, rgba(61,214,232,0) 26px 60px);
+  mask-image: linear-gradient(180deg, transparent, #000 40%, transparent); -webkit-mask-image: linear-gradient(180deg, transparent, #000 40%, transparent);
+  animation: sway 20s ease-in-out infinite alternate;
+}
+@keyframes drift { from { transform: translateX(-5%) skewY(-6deg) scaleY(0.9); } to { transform: translateX(6%) skewY(-2deg) scaleY(1.12); } }
+@keyframes sway { from { transform: translateX(-2%); } to { transform: translateX(3%); } }
+@media (prefers-reduced-motion: reduce) {
+  .band, .rays { animation: none; }
+  html { scroll-behavior: auto; }
+  .card { transition: none; }
+}
+
+.page { position: relative; z-index: 1; max-width: 1120px; margin: 0 auto; }
+
+/* ---------- hero ---------- */
+.hero { padding-block: 56px 28px; display: grid; gap: 18px; justify-items: start; }
+.eyebrow { font-size: 0.78rem; text-transform: uppercase; color: var(--ink-2); }
+.hero h1 { font-size: clamp(2.3rem, 8vw, 4.4rem); font-weight: 700; letter-spacing: -0.01em; max-width: 14ch; }
+.hero h1 em { font-style: normal; background: linear-gradient(90deg, var(--green), var(--teal) 70%); -webkit-background-clip: text; background-clip: text; color: transparent; }
+.lead { max-width: 56ch; color: var(--ink-2); font-size: 1.05rem; }
+.facts { display: flex; flex-wrap: wrap; gap: 8px 10px; font-size: 0.8rem; color: var(--ink); }
+.facts li { padding: 4px 12px; border: 1px solid var(--line-strong); border-radius: 999px; background: rgba(8, 16, 34, 0.55); }
+.btn {
+  display: inline-flex; align-items: center; justify-content: center; gap: 0.5em; min-height: 46px; padding: 0.55em 1.15em;
+  border-radius: 10px; font: 600 0.98rem var(--font-body); text-decoration: none; cursor: pointer;
+  border: 1px solid var(--line-strong); color: var(--ink); background: rgba(255,255,255,0.05);
+  transition: transform .15s ease, background .15s ease, border-color .15s ease;
+}
+.btn:hover { background: rgba(255,255,255,0.1); border-color: rgba(160,200,255,0.55); }
+.btn.primary { background: var(--green); color: var(--on-green); border-color: transparent; }
+.btn.primary:hover { background: #86ffc8; }
+
+/* ---------- steps ---------- */
+.steps { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 230px), 1fr)); gap: 12px; padding-block: 8px 28px; }
+.step { background: var(--panel); border: 1px solid var(--line); border-radius: 14px; padding: 16px 18px; display: grid; gap: 4px; min-width: 0; backdrop-filter: blur(6px); }
+.step .n { font-size: 0.78rem; color: var(--green); }
+.step h3 { font-size: 1.1rem; }
+.step p { color: var(--ink-2); font-size: 0.93rem; }
+
+/* ---------- section heads ---------- */
+.sec-head { display: flex; flex-wrap: wrap; align-items: end; justify-content: space-between; gap: 10px 20px; padding-bottom: 14px; }
+.sec-head h2 { font-size: clamp(1.4rem, 4vw, 1.9rem); }
+.sec-sub { color: var(--ink-2); font-size: 0.93rem; max-width: 62ch; margin-top: 4px; }
+.count { color: var(--ink-3); font-size: 0.8rem; }
+
+.chips { display: flex; flex-wrap: wrap; gap: 8px; padding-bottom: 18px; }
+.chip {
+  font: 500 0.9rem var(--font-body); color: var(--ink-2); background: rgba(8,16,34,0.55); border: 1px solid var(--line);
+  border-radius: 999px; padding: 7px 15px; min-height: 38px; cursor: pointer;
+}
+.chip:hover { border-color: var(--line-strong); color: var(--ink); }
+.chip[aria-pressed="true"] { color: var(--green); border-color: rgba(92,242,176,0.7); background: rgba(92,242,176,0.12); }
+
+.notice { margin-bottom: 16px; padding: 12px 16px; border: 1px solid rgba(240,138,216,0.5); background: rgba(240,138,216,0.1); border-radius: 12px; color: var(--ink); }
+.notice a { color: var(--ink); }
+
+/* ---------- cards ---------- */
+.grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(min(100%, 290px), 1fr)); gap: 16px; }
+.card {
+  display: grid; grid-template-rows: auto 1fr; min-width: 0; text-decoration: none; color: var(--ink);
+  background: var(--panel); border: 1px solid var(--line); border-radius: 14px; overflow: hidden;
+  transition: transform .18s ease, border-color .18s ease; backdrop-filter: blur(6px);
+}
+.card:hover { transform: translateY(-3px); border-color: rgba(92,242,176,0.55); }
+.thumb {
+  position: relative; aspect-ratio: 2 / 1; overflow: hidden; max-width: 100%;
+  background:
+    radial-gradient(120% 95% at 18% -10%, hsl(var(--h1) 90% 55% / 0.6), transparent 62%),
+    radial-gradient(100% 80% at 84% -6%, hsl(var(--h2) 85% 62% / 0.5), transparent 62%),
+    radial-gradient(90% 70% at 52% -12%, hsl(var(--h3) 80% 64% / 0.4), transparent 66%),
+    linear-gradient(180deg, #07101f, #0b1a33);
+}
+.thumb svg { position: absolute; inset: 0; width: 100%; height: 100%; display: block; }
+.thumb .grat line { stroke: rgba(190, 220, 255, 0.16); stroke-width: 1; vector-effect: non-scaling-stroke; }
+.thumb .link { fill: none; stroke: rgba(233, 242, 255, 0.5); stroke-width: 1; stroke-dasharray: 3 4; vector-effect: non-scaling-stroke; }
+.thumb .halo { fill: rgba(92, 242, 176, 0.22); }
+.thumb .pin { fill: #f3fff9; }
+.thumb .dust { fill: rgba(220, 235, 255, 0.7); }
+.card-body { padding: 14px 16px 16px; display: grid; gap: 6px; align-content: start; min-width: 0; }
+.card-top { display: flex; align-items: center; justify-content: space-between; gap: 10px; }
+.plat { font-size: 0.72rem; text-transform: uppercase; color: var(--ink-2); }
+.pips { display: inline-flex; align-items: center; gap: 5px; font-size: 0.74rem; color: var(--ink-2); white-space: nowrap; }
+.pips i { width: 8px; height: 8px; border-radius: 50%; border: 1px solid var(--green); display: inline-block; }
+.pips i.on { background: var(--green); }
+.pips .lbl { margin-left: 3px; }
+.badge-learn { font-size: 0.72rem; color: var(--teal); border: 1px solid rgba(61,214,232,0.5); border-radius: 999px; padding: 1px 10px; }
+.card h3 { font-size: 1.28rem; }
+.card .th { color: var(--ink-2); font-size: 0.88rem; margin-top: -2px; }
+.card .blurb { color: var(--ink-2); font-size: 0.93rem; }
+.stat { font-size: 0.78rem; color: var(--green); margin-top: 4px; }
+
+/* ---------- clues ---------- */
+.clues-wrap { padding-block: 44px 8px; }
+.clues { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 240px), 1fr)); gap: 12px; }
+.clue { background: var(--panel); border: 1px solid var(--line); border-radius: 14px; padding: 16px 18px; min-width: 0; backdrop-filter: blur(6px); }
+.clue h3 { font-size: 1.05rem; margin-bottom: 4px; }
+.clue p { color: var(--ink-2); font-size: 0.92rem; }
+
+/* ---------- footer ---------- */
+.foot { margin-top: 44px; padding-top: 22px; border-top: 1px solid var(--line); display: grid; gap: 14px; color: var(--ink-3); font-size: 0.86rem; }
+.foot p { max-width: 74ch; }
+.srcs { display: flex; flex-wrap: wrap; gap: 6px 16px; }
+.srcs a { color: var(--ink-2); }
+
+/* ---------- detail ---------- */
+.back { display: inline-flex; align-items: center; gap: 8px; margin-block: 22px 14px; color: var(--ink); text-decoration: none; font-weight: 500; padding: 6px 14px 6px 10px; border: 1px solid var(--line); border-radius: 999px; background: rgba(8,16,34,0.6); }
+.back:hover { border-color: var(--line-strong); }
+.d-thumb { border: 1px solid var(--line); border-radius: 16px; overflow: hidden; }
+.d-thumb .thumb { aspect-ratio: 21 / 9; }
+.d-head { padding-block: 22px 12px; display: grid; gap: 6px; }
+.d-head h1 { font-size: clamp(1.9rem, 6vw, 3rem); font-weight: 700; outline: none; }
+.d-head .sub { color: var(--ink-2); font-size: 1.05rem; }
+.cta-row { display: flex; flex-wrap: wrap; gap: 10px; align-items: center; padding-bottom: 12px; }
+.urlline { display: flex; flex-wrap: wrap; gap: 8px 12px; align-items: center; color: var(--ink-3); font-size: 0.84rem; padding-bottom: 22px; min-width: 0; }
+.urlline code { font-family: var(--font-mono); color: var(--ink-2); word-break: break-all; min-width: 0; }
+.d-grid { display: grid; grid-template-columns: minmax(0, 1fr); gap: 22px; align-items: start; }
+@media (min-width: 880px) { .d-grid { grid-template-columns: minmax(0, 1fr) 320px; } }
+.d-main { display: grid; gap: 14px; min-width: 0; }
+.d-main h2, .d-side h2 { font-size: 1.25rem; }
+.d-main p { color: var(--ink); max-width: 66ch; }
+.tips { display: grid; gap: 10px; max-width: 66ch; }
+.tips li { position: relative; padding-left: 24px; color: var(--ink-2); }
+.tips li::before { content: ""; position: absolute; left: 2px; top: 0.7em; width: 8px; height: 8px; border-radius: 50%; background: var(--teal); box-shadow: 0 0 10px var(--teal); }
+.tips a { color: var(--green); }
+.note { background: var(--panel); border: 1px solid var(--line); border-radius: 12px; padding: 14px 16px; display: grid; gap: 4px; max-width: 66ch; }
+.note .mono { font-size: 0.74rem; color: var(--rose); text-transform: uppercase; }
+.note p { color: var(--ink-2); font-size: 0.93rem; }
+.d-side { background: var(--panel); border: 1px solid var(--line); border-radius: 14px; padding: 18px; display: grid; gap: 12px; min-width: 0; backdrop-filter: blur(6px); }
+.d-side h2 { font-size: 0.8rem; color: var(--ink-2); text-transform: uppercase; font-family: var(--font-mono); font-weight: 500; letter-spacing: 0.08em; }
+dl { margin: 0; display: grid; gap: 10px; }
+dl div { display: grid; gap: 1px; border-top: 1px solid var(--line); padding-top: 8px; min-width: 0; }
+dl div:first-child { border-top: 0; padding-top: 0; }
+dt { color: var(--ink-3); font-size: 0.8rem; }
+dd { margin: 0; color: var(--ink); font-variant-numeric: tabular-nums; min-width: 0; }
+.more { padding-top: 40px; }
+.more h2 { font-size: 1.4rem; padding-bottom: 14px; }
+/* ---------- meta (illustrated clues) ---------- */
+.msec { padding-block: 44px 4px; scroll-margin-top: 16px; }
+.mgrid { display: grid; grid-template-columns: minmax(0, 1fr); gap: 16px; }
+@media (min-width: 900px) { .mgrid { grid-template-columns: repeat(3, minmax(0, 1fr)); } }
+.mcard {
+  display: grid; grid-template-rows: auto 1fr; min-width: 0; color: var(--ink);
+  background: var(--panel); border: 1px solid var(--line); border-radius: 14px; overflow: hidden;
+  scroll-margin-top: 16px; backdrop-filter: blur(6px);
+}
+.mcard.flash { outline: 2px solid var(--green); outline-offset: 3px; }
+a.mini { text-decoration: none; transition: transform .18s ease, border-color .18s ease; }
+a.mini:hover { transform: translateY(-3px); border-color: rgba(92, 242, 176, 0.55); }
+a.mini .mbody h3 { font-size: 1.08rem; }
+a.mini .mbody p:last-child { color: var(--ink-2); font-size: 0.9rem; }
+@media (prefers-reduced-motion: reduce) { a.mini { transition: none; } }
+.mini-link { padding-top: 14px; color: var(--ink-2); }
+.ill {
+  position: relative; aspect-ratio: 12 / 7; max-width: 100%; max-height: 300px; overflow: hidden;
+  background:
+    radial-gradient(120% 95% at 18% -10%, hsl(var(--h1) 90% 55% / 0.5), transparent 62%),
+    radial-gradient(100% 80% at 84% -6%, hsl(var(--h2) 85% 62% / 0.4), transparent 62%),
+    linear-gradient(180deg, #07101f, #0b1a33);
+  border-bottom: 1px solid var(--line);
+}
+.ill svg { position: absolute; inset: 0; width: 100%; height: 100%; display: block; }
+.ill text { font-family: var(--font-mono); font-size: 8px; fill: var(--ink); }
+.ill .th { font-family: var(--font-body), 'Noto Sans JP', 'Noto Sans', sans-serif; }
+.ill .dim { fill: var(--ink-2); }
+.ill .dk { fill: #15181f; }
+.ill .gn { fill: #0b6b3a; }
+.ill .f7 { font-size: 7px; }
+.ill .f8 { font-size: 8px; }
+.ill .f9 { font-size: 9px; }
+.ill .f11 { font-size: 11px; }
+.mbody { padding: 14px 16px 16px; display: grid; gap: 8px; align-content: start; min-width: 0; }
+.mbody h3 { font-size: 1.22rem; }
+.mbody .blurb { color: var(--ink-2); font-size: 0.93rem; }
+.mlist { display: grid; gap: 6px; }
+.mlist li { position: relative; padding-left: 16px; color: var(--ink-2); font-size: 0.9rem; line-height: 1.55; }
+.mlist li::before { content: ""; position: absolute; left: 2px; top: 0.62em; width: 6px; height: 6px; border-radius: 50%; background: var(--teal); }
+.hero-cta { display: flex; flex-wrap: wrap; gap: 10px; }
+
+[hidden] { display: none !important; }
+</style>
+</head>
+<body>
+
+<div class="sky" aria-hidden="true">
+  <canvas id="stars"></canvas>
+  <div class="aurora"><div class="band b1"></div><div class="band b2"></div><div class="band b3"></div><div class="rays"></div></div>
+</div>
+
+<div class="page" lang="th">
+
+  <!-- ===== HOME ===== -->
+  <div id="view-home">
+    <header class="hero">
+      <p class="eyebrow mono">Aurora Atlas · คู่มือแมพ GeoGuessr</p>
+      <h1>เริ่มเดาโลก ใต้แสง<em>ออโรร่า</em></h1>
+      <p class="lead">รวมแมพ GeoGuessr ที่เหมาะกับคนเพิ่งเริ่มเล่น กดการ์ดไหนก็เปิดหน้ารายละเอียดในเว็บนี้ได้ทันที แล้วปุ่มเล่นจะพาไปที่หน้าแมพจริง</p>
+      <ul class="facts mono">
+        <li>1 เกม = 5 รอบ</li>
+        <li>สูงสุด 5,000 คะแนน / รอบ</li>
+        <li>เต็ม 25,000</li>
+      </ul>
+      <div class="hero-cta"><button class="btn primary" type="button" id="go-grid">ดูแมพทั้งหมด ↓</button><button class="btn" type="button" id="go-meta">ดูเมต้าสำคัญ ↓</button></div>
+    </header>
+
+    <section class="steps" aria-label="เริ่มเล่นใน 3 ขั้น">
+      <div class="step"><span class="n mono">ขั้น 1</span><h3>เลือกแมพ</h3><p>เริ่มจากแมพที่มีป้ายระดับ 1 หรือแมพที่รู้จักสถานที่อยู่แล้ว</p></div>
+      <div class="step"><span class="n mono">ขั้น 2</span><h3>อ่านเบาะแส</h3><p>มองป้าย ตัวอักษร ฝั่งที่รถวิ่ง และพืชรอบตัว ก่อนเปิดแผนที่</p></div>
+      <div class="step"><span class="n mono">ขั้น 3</span><h3>ปักหมุด</h3><p>ซูมแผนที่ให้ใกล้ที่สุดเท่าที่มั่นใจ ยิ่งใกล้จุดจริง คะแนนยิ่งสูง</p></div>
+    </section>
+
+    <section id="grid-sec" style="scroll-margin-top:16px">
+      <div class="sec-head">
+        <div>
+          <h2>แมพและแหล่งฝึก</h2>
+          <p class="sec-sub">บางแมพบน GeoGuessr ต้องสมัครสมาชิกจึงเล่นได้เต็มที่ ส่วนแมพบน WorldGuessr เล่นฟรีและไม่ต้องมีบัญชี</p>
+        </div>
+        <p class="count mono" id="count" role="status"></p>
+      </div>
+      <div id="nf" class="notice" role="status" hidden>ลิงก์ที่เปิดมาไม่ตรงกับแมพไหนในเว็บนี้ จึงพากลับมาที่รายการทั้งหมด เลือกแมพจากด้านล่างได้เลย</div>
+      <div class="chips" id="chips" role="group" aria-label="กรองแมพ"></div>
+      <div class="grid" id="grid"></div>
+    </section>
+
+    <section class="msec" id="meta-sec" aria-labelledby="meta-h">
+      <div class="sec-head">
+        <div>
+          <h2 id="meta-h">เมต้าสำคัญที่ควรรู้</h2>
+          <p class="sec-sub">เมต้าคือเบาะแสที่ซ้ำๆ กันในแต่ละประเทศ จำสักไม่กี่อย่างก่อนก็พอ ภาพประกอบเป็นภาพวาดแบบย่อให้เห็นรูปทรงและสี ไม่ใช่ภาพถ่ายจริง</p>
+        </div>
+        <p class="count mono">9 เรื่อง</p>
+      </div>
+      <div class="mgrid" id="meta-grid"></div>
+    </section>
+
+    <section class="msec" id="ctry-sec" aria-labelledby="ctry-h">
+      <div class="sec-head">
+        <div>
+          <h2 id="ctry-h">เมต้าตามประเทศ</h2>
+          <p class="sec-sub">สรุปเบาะแสของสามประเทศที่เจอบ่อย เริ่มจากไทยที่คุ้นตาที่สุด</p>
+        </div>
+        <p class="count mono">3 ประเทศ</p>
+      </div>
+      <div class="mgrid" id="ctry-grid"></div>
+    </section>
+
+    <footer class="foot">
+      <p>ระดับความยากเป็นการประเมินของผู้ทำหน้านี้สำหรับมือใหม่ ไม่ใช่ตัวเลขทางการ ส่วนจำนวนตำแหน่งและจำนวนครั้งที่เล่นเป็นตัวเลขที่เห็นบนหน้าแมพตอนรวบรวม (27 ต.ค. 2026) และเปลี่ยนไปได้ตามเวลา</p>
+      <p>เมต้าสรุปจากบทความและคู่มือของชุมชน แต่ละประเทศมีข้อยกเว้น ควรเทียบกับ Plonk It ก่อนยึดเป็นกฎ ภาพประกอบทั้งหมดเป็นภาพวาดต้นฉบับแบบย่อ</p>
+      <p>ปุ่มเล่นทุกปุ่มเปิดหน้าต่างใหม่ไปยังเว็บต้นทางโดยตรง เว็บนี้ไม่ได้เป็นของ GeoGuessr, WorldGuessr หรือ OpenGuessr</p>
+      <div class="srcs mono">
+        <a href="https://www.geoguessr.com/maps/world" target="_blank" rel="noopener noreferrer">geoguessr.com</a>
+        <a href="https://www.worldguessr.com/maps" target="_blank" rel="noopener noreferrer">worldguessr.com</a>
+        <a href="https://openguessr.com/maps" target="_blank" rel="noopener noreferrer">openguessr.com</a>
+        <a href="https://learnablemeta.com/about" target="_blank" rel="noopener noreferrer">learnablemeta.com</a>
+        <a href="https://geometas.com/learn/world_map_common_locations" target="_blank" rel="noopener noreferrer">geometas.com</a>
+        <a href="https://www.plonkit.net/" target="_blank" rel="noopener noreferrer">plonkit.net</a>
+      </div>
+    </footer>
+  </div>
+
+  <!-- ===== DETAIL ===== -->
+  <main id="view-detail" hidden></main>
+</div>
+
+<script>
+(function () {
+  'use strict';
+
+  var PLAT = { geoguessr: 'GeoGuessr', worldguessr: 'WorldGuessr', openguessr: 'OpenGuessr', web: 'เว็บความรู้' };
+  var NOTE_GG = 'บัญชีฟรีของ GeoGuessr เล่นได้จำกัด บางแมพและโหมดต้องสมัครสมาชิก ถ้าเล่นไม่ได้ ลองแมพบน WorldGuessr ที่เล่นฟรีและไม่ต้องมีบัญชี';
+  var NOTE_WG = 'WorldGuessr เป็นเว็บของผู้พัฒนาอีกราย ไม่ใช่ของ GeoGuessr เล่นฟรีและเริ่มได้โดยไม่ต้องมีบัญชี';
+  var WG = 'https://www.worldguessr.com/';
+
+  var MAPS = [
+    {
+      id: 'world', src: 'geoguessr', name: 'World', th: 'แมพโลก แมพมาตรฐานของเกม',
+      url: 'https://www.geoguessr.com/maps/world', cta: 'เปิดแมพบน GeoGuessr',
+      blurb: 'แมพหลักที่ GeoGuessr ดูแลเอง สุ่มจุดทั่วโลก และมีคนเล่นมากที่สุด',
+      stat: '23.4 ล้านจุด', level: 1, tags: ['start', 'geoguessr'], hue: [160, 190, 265],
+      pins: [[114.17, 22.3], [-177.4, 28.2], [16.37, 48.2], [7.42, 43.73], [-64.75, 32.3], [46.9, -18.8]],
+      facts: [['ผู้สร้าง', 'GeoGuessr (แมพทางการ)'], ['จำนวนตำแหน่ง', '23,456,746'], ['จำนวนครั้งที่เล่น', 'ประมาณ 243 ล้าน'], ['อัปเดตล่าสุด', '20 พ.ย. 2024'], ['เล่นที่', 'geoguessr.com']],
+      why: 'เป็นแมพที่ใช้ในโหมดผู้เล่นหลายคนของผู้เล่นจนถึงแรงก์ Gold จึงเป็นสนามฝึกที่ใกล้เกมจริงที่สุด และบางตำแหน่งโผล่บ่อยมาก เช่น ฮ่องกง โมนาโก เวียนนา จำจุดเหล่านี้ไว้ก็มีโอกาสได้คะแนนเต็มเพิ่มขึ้น',
+      tips: [
+        'เริ่มจากโหมดที่เดินและซูมได้ก่อน จะมีเวลามองรอบตัวมากขึ้น แล้วค่อยลองโหมดห้ามเดิน',
+        'หลังจบแต่ละรอบ ดูผลเฉลยแล้วทบทวนว่าพลาดเบาะแสอะไรไป',
+        'อ่านรายการ <a href="#map-geometas">จุดที่โผล่บ่อยในแมพ World</a> ก่อนเล่นสักรอบ'
+      ],
+      note: NOTE_GG, next: ['famous-places', 'geometas', 'community-world']
+    },
+    {
+      id: 'famous-places', src: 'geoguessr', name: 'Famous Places', th: 'สถานที่มีชื่อเสียงทั่วโลก',
+      url: 'https://www.geoguessr.com/maps/famous-places', cta: 'เปิดแมพบน GeoGuessr',
+      blurb: '351 จุดที่เป็นสิ่งมหัศจรรย์ทางธรรมชาติและแลนด์มาร์กที่คนรู้จัก',
+      stat: '351 จุด', level: 1, tags: ['start', 'geoguessr'], hue: [185, 150, 300],
+      pins: [[31.13, 29.98], [2.35, 48.86], [-74.0, 40.7], [-43.2, -22.95], [151.2, -33.87], [78.04, 27.17]],
+      facts: [['ผู้สร้าง', 'GeoGuessr (แมพทางการ)'], ['จำนวนตำแหน่ง', '351'], ['จำนวนครั้งที่เล่น', 'ประมาณ 108 ล้าน'], ['ถูกใจ', '173,829'], ['คะแนนเฉลี่ย', '7,428 (ตามที่หน้าแมพแสดง)'], ['อัปเดตล่าสุด', '15 ส.ค. 2025']],
+      why: 'ส่วนใหญ่เป็นสถานที่ที่เคยเห็นในรูปหรือสารคดี จึงเดาได้จากสิ่งที่เห็นโดยไม่ต้องท่องเบาะแสเยอะ แอป GeoGuessr ก็ยกให้เป็นแมพยอดนิยมสำหรับเล่นคนเดียว',
+      tips: [
+        'เดาประเทศหรือทวีปก่อน แล้วค่อยซูมหาเมืองที่ตั้งของสถานที่นั้น',
+        'ถ้าจำชื่อสถานที่ได้ ให้นึกถึงที่ตั้งบนแผนที่ แล้วปักหมุดที่นั่นเลย',
+        'อยากเล่นฟรีไม่ต้องมีบัญชี ลอง <a href="#map-wg-famous">Famous Places บน WorldGuessr</a>'
+      ],
+      note: NOTE_GG, next: ['wg-famous', 'world', 'community-world']
+    },
+    {
+      id: 'community-world', src: 'geoguessr', name: 'A Community World', th: 'แมพโลกที่ชุมชนผู้เล่นช่วยกันคัด',
+      url: 'https://www.geoguessr.com/maps/62a44b22040f04bd36e8a914', cta: 'เปิดแมพบน GeoGuessr',
+      blurb: '105,000 จุดที่ผู้เล่นและคนทำแมพกว่าร้อยคนช่วยกันเลือก',
+      stat: '105,000 จุด', level: 2, tags: ['geoguessr'], hue: [150, 200, 250],
+      pins: [[36.8, -1.3], [-70.65, -33.45], [10.75, 59.9], [115.86, -31.95], [-104.99, 39.74], [105.85, 21.03], [44.8, 41.7]],
+      facts: [['ผู้สร้าง', 'ชุมชนผู้เล่น GeoGuessr'], ['จำนวนตำแหน่ง', '105,000'], ['จำนวนครั้งที่เล่น', 'ประมาณ 21 ล้าน'], ['ถูกใจ', '72,007'], ['อัปเดตล่าสุด', '24 ต.ค. 2026']],
+      why: 'ตำแหน่งถูกคัดโดยผู้เล่นที่มีประสบการณ์ ไม่ใช่สุ่มล้วน และเป็นแมพที่ชุมชนใช้กันกว้างขวาง เหมาะเป็นก้าวถัดไปหลังเริ่มคุ้นกับแมพ World สถานที่หลากหลายกว่า จึงยากขึ้นเล็กน้อย',
+      tips: [
+        'เล่นหลังจากคุ้นกับ <a href="#map-world">แมพ World</a> แล้ว',
+        'จดประเทศที่เดาพลาดบ่อย แล้วกลับไปดูเบาะแสของประเทศนั้นก่อนเล่นรอบถัดไป'
+      ],
+      note: NOTE_GG, next: ['world', 'wg-completed', 'learnablemeta']
+    },
+    {
+      id: 'wg-thailand', src: 'worldguessr', name: 'Thailand', th: 'แมพประเทศไทย บน WorldGuessr',
+      url: WG + '?map=thailand', url2: WG + 'map/thailand', cta: 'เล่นฟรีบน WorldGuessr', cta2: 'ดูหน้าแมพ',
+      blurb: 'ตั้งแต่ภูเขาทางเหนือถึงเกาะทางใต้ ฝึกเดาภาคของไทยจากภูมิประเทศ',
+      stat: 'แมพประเทศ', level: 1, tags: ['start', 'free', 'asia'], hue: [155, 185, 320],
+      pins: [[100.5, 13.75], [98.99, 18.79], [102.84, 16.43], [98.39, 7.88]], zoom: true,
+      facts: [['ผู้สร้าง', 'WorldGuessr'], ['ขอบเขต', 'ทั่วประเทศไทย'], ['เล่นที่', 'worldguessr.com'], ['บัญชี', 'ไม่ต้องมี']],
+      why: 'คำอธิบายของแมพชี้ว่ามีเบาะแสอ่านง่ายหลายอย่าง ทั้งป้ายอักษรไทย วัดหลังคาทรงแหลม พืชเขตร้อน และหลักกิโลเมตรริมถนน เป็นประเทศที่คุ้นตาที่สุดสำหรับคนไทย จึงเริ่มฝึกตรงนี้ได้เลย',
+      tips: [
+        'เดาภาคก่อนเดาจังหวัด: ภูเขาทางเหนือ ที่ราบภาคกลาง ที่ราบสูงอีสาน และเกาะหินปูนฝั่งอันดามัน',
+        'ดูหลักกิโลเมตรและป้ายทางหลวง ช่วยบอกทิศทางและพื้นที่คร่าวๆ',
+        'พอคล่องแล้วไปต่อที่ <a href="#map-wg-sea">เอเชียตะวันออกเฉียงใต้</a>'
+      ],
+      note: NOTE_WG, next: ['wg-sea', 'wg-eastern', 'wg-famous']
+    },
+    {
+      id: 'wg-famous', src: 'worldguessr', name: 'Famous Places (UPDATED)', th: 'สถานที่มีชื่อเสียง 20 จุด บน WorldGuessr',
+      url: WG + '?map=famous-places', url2: WG + 'map/famous-places', cta: 'เล่นฟรีบน WorldGuessr', cta2: 'ดูหน้าแมพ',
+      blurb: 'แลนด์มาร์กและอาคารที่น่าจะเคยเห็น เล่นจบเร็ว เหมาะกับการเริ่มต้น',
+      stat: '20 จุด', level: 1, tags: ['start', 'free'], hue: [200, 260, 150],
+      pins: [[-72.55, -13.16], [103.87, 13.41], [12.49, 41.89], [35.44, 30.33], [-74.0, 40.7]],
+      facts: [['ผู้สร้าง', 'NOZZA'], ['จำนวนตำแหน่ง', '20'], ['จำนวนครั้งที่เล่น', '591,142'], ['ถูกใจ', '6,752'], ['อัปเดตล่าสุด', '20 ส.ค. 2025']],
+      why: 'มีแค่ 20 จุด เล่นซ้ำสองสามรอบก็เริ่มจำสถานที่ได้ เป็นทางเลือกฟรีสำหรับคนที่อยากลองแนวแลนด์มาร์กโดยไม่ต้องสมัครสมาชิก',
+      tips: [
+        'ลองเล่นแมพนี้ก่อน แล้วค่อยไป <a href="#map-famous-places">Famous Places ฉบับ 351 จุดบน GeoGuessr</a>',
+        'ถ้าเห็นสถานที่ที่จำชื่อไม่ได้ ให้ดูสถาปัตยกรรมและป้ายรอบๆ เพื่อเดาภูมิภาค'
+      ],
+      note: NOTE_WG, next: ['famous-places', 'wg-thailand', 'wg-completed']
+    },
+    {
+      id: 'wg-completed', src: 'worldguessr', name: 'A Completed World', th: 'แมพโลกที่ครบเกือบทุกประเทศ',
+      url: WG + '?map=a-completed-world', url2: WG + 'map/a-completed-world', cta: 'เล่นฟรีบน WorldGuessr', cta2: 'ดูหน้าแมพ',
+      blurb: 'รวมเกือบทุกประเทศ ทั้งที่มีและไม่มีสตรีทวิวทางการ',
+      stat: '27,496 จุด', level: 2, tags: ['free'], hue: [170, 215, 275],
+      pins: [[-21.9, 64.15], [106.9, 47.9], [174.78, -41.29], [-77.04, -12.05], [-0.19, 5.6], [69.24, 41.3]],
+      facts: [['ผู้สร้าง', 'MeLikeOpeth'], ['จำนวนตำแหน่ง', '27,496'], ['จำนวนครั้งที่เล่น', '23,566'], ['ถูกใจ', '400'], ['อัปเดตล่าสุด', '19 ก.ย. 2025']],
+      why: 'ผู้สร้างตัดเกาะเล็กส่วนใหญ่ออกเพื่อไม่ให้เจอแต่เกาะ เหลือประเทศที่หลากหลายไว้ให้ฝึกกว้างๆ เหมาะเมื่ออยากรู้ว่าตัวเองยังไม่คุ้นประเทศไหน',
+      tips: [
+        'จดชื่อประเทศที่เจอแล้วไม่รู้จัก แล้วค้นเบาะแสของประเทศนั้นทีหลัง',
+        'ลองเล่นควบคู่กับ <a href="#map-learnablemeta">Learnable Meta</a> เพื่อเรียนเบาะแสไปด้วย'
+      ],
+      note: NOTE_WG, next: ['community-world', 'wg-eastern', 'learnablemeta']
+    },
+    {
+      id: 'wg-sea', src: 'worldguessr', name: 'A Balanced Southeast Asia', th: 'เอเชียตะวันออกเฉียงใต้แบบสมดุล',
+      url: WG + '?map=a-balanced-southeast-asia', url2: WG + 'map/a-balanced-southeast-asia', cta: 'เล่นฟรีบน WorldGuessr', cta2: 'ดูหน้าแมพ',
+      blurb: 'ทุกประเทศในภูมิภาค แยกบังกลาเทศ ไทย อินโดนีเซียให้ออก',
+      stat: 'ทั้งภูมิภาค', level: 2, tags: ['free', 'asia'], hue: [145, 190, 300],
+      pins: [[100.5, 13.75], [105.85, 21.03], [106.85, -6.2], [120.98, 14.6], [101.69, 3.14], [104.92, 11.56]], zoom: true,
+      facts: [['ผู้สร้าง', 'ชุมชน WorldGuessr'], ['ขอบเขต', 'เอเชียตะวันออกเฉียงใต้'], ['เล่นที่', 'worldguessr.com'], ['บัญชี', 'ไม่ต้องมี']],
+      why: 'ครอบคลุมทุกประเทศในภูมิภาค รวมประเทศที่ไม่มีภาพถ่ายทางการ และกระจายจุดค่อนข้างสมดุล เหมาะหลังจากเล่นแมพประเทศไทยจนคล่อง เพราะเพื่อนบ้านหลายประเทศหน้าตาคล้ายกัน',
+      tips: [
+        'เริ่มจากเดาประเทศ โดยดูตัวอักษรบนป้าย: ไทย ลาว เขมร พม่า ใช้อักษรต่างกัน',
+        'ตัวหนังสือละตินที่ชวนให้งงมักเป็นอินโดนีเซีย มาเลเซีย ฟิลิปปินส์ ให้ดูฝั่งรถวิ่งและป้ายประกอบ'
+      ],
+      note: NOTE_WG, next: ['wg-thailand', 'wg-eastern', 'learnablemeta']
+    },
+    {
+      id: 'wg-eastern', src: 'worldguessr', name: 'The Eastern World', th: 'โลกตะวันออก เอเชียใต้ ตะวันออก และอาคเนย์',
+      url: WG + '?map=the-eastern-world', url2: WG + 'map/the-eastern-world', cta: 'เล่นฟรีบน WorldGuessr', cta2: 'ดูหน้าแมพ',
+      blurb: '2,141 จุดคัดมือ ครอบคลุม 28 ประเทศและภูมิภาคในเอเชีย',
+      stat: '2,141 จุด', level: 2, tags: ['free', 'asia'], hue: [190, 265, 320],
+      pins: [[139.69, 35.69], [126.98, 37.57], [77.2, 28.6], [100.5, 13.75], [79.86, 6.93]], zoom: true,
+      facts: [['ผู้สร้าง', 'ชุมชน WorldGuessr'], ['จำนวนตำแหน่ง', '2,141'], ['ขอบเขต', '28 ประเทศและภูมิภาค'], ['เล่นที่', 'worldguessr.com']],
+      why: 'จุดถูกคัดมาแล้วในเอเชียใต้ เอเชียตะวันออก และเอเชียตะวันออกเฉียงใต้ เหมาะกับคนที่เล่นแมพไทยจนคล่อง และอยากขยายวงไปประเทศใกล้เคียงทีละก้าว',
+      tips: [
+        'ถ้าเห็นป้ายอักษรจีนหรือญี่ปุ่น ให้เช็กฝั่งรถวิ่งและรูปทรงป้ายก่อนตัดสินใจ',
+        'อักษรเทวนาครีและอักษรอื่นๆ ในเอเชียใต้ ช่วยแยกอินเดียกับเพื่อนบ้านได้'
+      ],
+      note: NOTE_WG, next: ['wg-sea', 'wg-thailand', 'wg-completed']
+    },
+    {
+      id: 'wg-capitals', src: 'worldguessr', name: "Top 25 Countries' Capitals", th: 'เมืองหลวงของ 25 ประเทศที่มีประชากรมากที่สุด',
+      url: WG + '?map=top-25-countries-capitals', url2: WG + 'map/top-25-countries-capitals', cta: 'เล่นฟรีบน WorldGuessr', cta2: 'ดูหน้าแมพ',
+      blurb: 'จุดรอบเมืองหลวง ประเทศละราว 100 จุด รวม 2,500 จุด',
+      stat: '2,500 จุด', level: 2, tags: ['free'], hue: [165, 255, 200],
+      pins: [[77.2, 28.6], [116.4, 39.9], [-77.04, 38.9], [106.85, -6.2], [-47.93, -15.8], [90.41, 23.81]],
+      facts: [['ผู้สร้าง', 'DeltaGeo'], ['จำนวนตำแหน่ง', '2,500'], ['จำนวนครั้งที่เล่น', '83 (ผู้เล่นน้อย)'], ['อัปเดตล่าสุด', '24 ต.ค. 2025']],
+      why: 'เขตเมืองมักมีป้ายและตัวหนังสือให้อ่านเยอะ ฝึกอ่านเบาะแสได้เร็ว เหมาะกับคนที่อยากเรียนรู้ประเทศใหญ่ๆ ทีละประเทศ ผู้ทำแมพแจ้งว่าบางประเทศมีจุดไม่ครบ เพราะข้อมูลภาพถ่ายทางการไม่พอ',
+      tips: [
+        'ลองเดาประเทศจากป้ายและตัวอักษรก่อน แล้วค่อยเลือกเมือง',
+        'ประเทศที่ได้จุดมากกว่าปกติมีอินเดีย จีน และสหรัฐอเมริกา โอกาสเจอจึงสูงกว่า'
+      ],
+      note: NOTE_WG, next: ['wg-completed', 'community-world', 'learnablemeta']
+    },
+    {
+      id: 'learnablemeta', src: 'web', name: 'Learnable Meta', th: 'แมพที่มีโน้ตสอนเบาะแสหลังทุกรอบ',
+      url: 'https://learnablemeta.com/maps', url2: 'https://learnablemeta.com/about', cta: 'เปิด Learnable Meta', cta2: 'อ่านเกี่ยวกับโปรเจกต์',
+      blurb: 'แมพที่แสดงโน้ตหลังเดาเสร็จ บอกว่ารอบนั้นมีเบาะแสอะไรให้จับ',
+      stat: 'เว็บฟรี', level: 0, tags: ['learn'], hue: [150, 300, 200],
+      pins: [[100.5, 13.75], [139.69, 35.69], [13.4, 52.52], [-58.38, -34.6], [28.05, -26.2]],
+      facts: [['ประเภท', 'แหล่งเรียนรู้เบาะแส'], ['วิธีเล่น', 'เล่นแมพบน GeoGuessr พร้อมสคริปต์เสริมในเบราว์เซอร์'], ['สคริปต์', 'โอเพนซอร์สบน GitHub'], ['เว็บ', 'learnablemeta.com']],
+      why: 'โปรเจกต์นี้รวมแมพการศึกษากับสคริปต์ในเบราว์เซอร์ พอเดาเสร็จ หน้าผลลัพธ์จะโชว์โน้ตว่ารอบนั้นมีเบาะแสอะไร เผื่อคุณมองข้ามไป มีทั้งแมพพื้นฐานของโลกและแมพเบาะแสสำหรับเอเชียตะวันออกเฉียงใต้ระดับเริ่มต้น',
+      tips: [
+        'เปิดหน้ารวมแมพของเว็บ แล้วเลือกแมพที่เป็นระดับเริ่มต้น',
+        'เล่นแมพบน GeoGuessr ตามลิงก์ของแต่ละแมพ แล้วอ่านโน้ตที่โผล่ขึ้นหลังปักหมุด'
+      ],
+      note: 'ต้องเล่นแมพของ Learnable Meta บน GeoGuessr ซึ่งบางแมพต้องสมัครสมาชิก', next: ['geometas', 'world', 'wg-sea']
+    },
+    {
+      id: 'geometas', src: 'web', name: 'จุดที่โผล่บ่อยในแมพ World', th: 'บทความจาก Geometas',
+      url: 'https://geometas.com/learn/world_map_common_locations', cta: 'อ่านบน Geometas',
+      blurb: 'รายการจุดที่แมพ World สุ่มเจอบ่อย เช่น ฮ่องกง โมนาโก เวียนนา',
+      stat: 'บทความ', level: 0, tags: ['learn'], hue: [175, 150, 260],
+      pins: [[114.17, 22.3], [-177.4, 28.2], [16.37, 48.2], [7.42, 43.73], [-64.75, 32.3], [46.9, -18.8]],
+      facts: [['ประเภท', 'บทความเรียนรู้'], ['จุดที่กล่าวถึง', 'ฮ่องกง มิดเวย์ เวียนนา โมนาโก เบอร์มิวดา มาดากัสการ์'], ['เว็บ', 'geometas.com']],
+      why: 'แมพ World เอนไปทางบางตำแหน่ง บทความนี้บอกว่าถ้าจำได้สักไม่กี่จุด จะมีโอกาสทำคะแนนเต็ม 5,000 ในบางรอบเพิ่มขึ้น เหมาะอ่านก่อนเล่นแมพ World',
+      tips: [
+        'อ่านแล้วลองเล่น <a href="#map-world">แมพ World</a> เช็กว่าเจอจุดไหนที่จำได้',
+        'ฮ่องกงและโมนาโกเป็นสองจุดที่บทความระบุว่าเดาง่าย'
+      ],
+      next: ['world', 'learnablemeta', 'famous-places']
+    },
+    {
+      id: 'openguessr', src: 'openguessr', name: 'OpenGuessr', th: 'ทางเลือกฟรีที่ใกล้เคียง GeoGuessr',
+      url: 'https://openguessr.com/maps', cta: 'เปิด OpenGuessr',
+      blurb: 'เว็บเกมแนวเดียวกัน มีแมพ Famous Places, Capital Cities และ World',
+      stat: 'เว็บฟรี', level: 0, tags: ['free', 'learn'], hue: [200, 160, 280],
+      pins: [[2.35, 48.86], [31.24, 30.04], [126.98, 37.57], [-99.13, 19.43], [151.2, -33.87]],
+      facts: [['ประเภท', 'เว็บเกมทางเลือก'], ['แมพพื้นฐาน', 'Famous Places, Capital Cities, World'], ['เว็บ', 'openguessr.com']],
+      why: 'บทความเปรียบเทียบเกมจัดให้ OpenGuessr อยู่ในกลุ่มที่ใกล้เคียง GeoGuessr ที่สุด และเปิดให้เล่นฟรี เหมาะเป็นอีกที่ให้ฝึกเมื่อโควตาเล่นฟรีบน GeoGuessr หมด',
+      tips: [
+        'เปิดหน้ารวมแมพแล้วเริ่มจาก Famous Places หรือ World',
+        'เล่นเสร็จแล้วกลับมาดูเบาะแสที่ <a href="#map-learnablemeta">Learnable Meta</a>'
+      ],
+      next: ['wg-famous', 'world', 'geometas']
+    }
+  ];
+
+  var BY = {};
+  MAPS.forEach(function (m) { BY[m.id] = m; });
+
+  /* ---------- meta: illustrated clues (original line art, not photographs) ---------- */
+  function svg(label, inner) {
+    return '<svg viewBox="0 0 240 140" role="img" aria-label="' + label + '" focusable="false">' + inner + '</svg>';
+  }
+  function post(cx, cap, strip) {
+    var x = cx - 7;
+    return '<rect x="' + x + '" y="52" width="14" height="60" rx="5" fill="#f4f6fb"/>' +
+      (cap ? '<path d="M' + x + ' 68V57a5 5 0 0 1 5-5h4a5 5 0 0 1 5 5V68Z" fill="' + cap + '" stroke="#e9f2ff" stroke-opacity=".45"/>' : '') +
+      (strip ? '<rect x="' + x + '" y="78" width="14" height="10" fill="' + strip + '"/>' : '');
+  }
+  function board(cx, a, b, size) {
+    return '<rect x="' + (cx - 33) + '" y="24" width="66" height="36" rx="4" fill="#0e3a3f" stroke="#5cf2b0" stroke-opacity=".55"/>' +
+      '<text class="th" style="font-size:' + size + 'px" x="' + cx + '" y="41" text-anchor="middle">' + a + '</text>' +
+      '<text class="f7 dim" x="' + cx + '" y="53" text-anchor="middle">' + b + '</text>';
+  }
+  function sunAt(x, y) {
+    return '<g transform="translate(' + x + ' ' + y + ')"><circle r="6.5" fill="#f5c518"/>' +
+      '<path d="M0-10V-13M0 10V13M-10 0H-13M10 0H13M7-7l2-2M-7-7l-2-2M7 7l2 2M-7 7l-2 2" stroke="#f5c518" stroke-width="1.4" stroke-linecap="round"/></g>';
+  }
+  function flagTH() {
+    return '<rect width="90" height="60" fill="#a51931"/><rect y="10" width="90" height="40" fill="#f4f5f8"/><rect y="20" width="90" height="20" fill="#2d2a4a"/>';
+  }
+  function flagJP() {
+    return '<rect width="90" height="60" fill="#f4f5f8"/><circle cx="45" cy="30" r="18" fill="#bc002d"/>';
+  }
+  function flagUS() {
+    var s = '<rect width="90" height="60" fill="#f4f5f8"/>', i, j, h = 60 / 13;
+    for (i = 0; i < 13; i += 2) s += '<rect y="' + (i * h).toFixed(2) + '" width="90" height="' + h.toFixed(2) + '" fill="#b22234"/>';
+    s += '<rect width="36" height="' + (7 * h).toFixed(2) + '" fill="#3c3b6e"/>';
+    for (i = 0; i < 4; i++) for (j = 0; j < 5; j++) s += '<circle cx="' + (5 + j * 6.6).toFixed(1) + '" cy="' + (5 + i * 7.4).toFixed(1) + '" r="1.3" fill="#f4f5f8"/>';
+    return s;
+  }
+  function flagArt(label, flag) {
+    return svg(label, '<g transform="translate(60 30)"><g transform="scale(1.3333)">' + flag + '</g></g>' +
+      '<rect x="60" y="30" width="120" height="80" fill="none" stroke="#e9f2ff" stroke-opacity=".35"/>');
+  }
+
+  var ILL = {};
+
+  ILL.side = svg('เปรียบเทียบรถที่วิ่งชิดซ้ายกับชิดขวาบนถนนสองเลน',
+    '<text class="th f9" x="64" y="14" text-anchor="middle">ขับชิดซ้าย</text>' +
+    '<text class="th f9" x="176" y="14" text-anchor="middle">ขับชิดขวา</text>' +
+    '<rect x="24" y="22" width="80" height="98" rx="6" fill="#1b2640"/>' +
+    '<rect x="136" y="22" width="80" height="98" rx="6" fill="#1b2640"/>' +
+    '<path d="M28 22V120M100 22V120M140 22V120M212 22V120" stroke="#e9f2ff" stroke-opacity=".45"/>' +
+    '<path d="M64 22V120M176 22V120" stroke="#e9f2ff" stroke-width="1.6" stroke-dasharray="7 6"/>' +
+    '<rect x="37" y="64" width="14" height="26" rx="4" fill="#3dd6e8"/><rect x="39.5" y="67" width="9" height="6" rx="1.5" fill="#0b1a33"/><path d="M44 55L38.5 63H49.5Z" fill="#3dd6e8"/>' +
+    '<rect x="77" y="30" width="14" height="26" rx="4" fill="#9d82ff" fill-opacity=".6"/><path d="M78.5 58H89.5L84 66Z" fill="#9d82ff" fill-opacity=".6"/>' +
+    '<rect x="189" y="64" width="14" height="26" rx="4" fill="#3dd6e8"/><rect x="191.5" y="67" width="9" height="6" rx="1.5" fill="#0b1a33"/><path d="M196 55L190.5 63H201.5Z" fill="#3dd6e8"/>' +
+    '<rect x="149" y="30" width="14" height="26" rx="4" fill="#9d82ff" fill-opacity=".6"/><path d="M150.5 58H161.5L156 66Z" fill="#9d82ff" fill-opacity=".6"/>' +
+    '<text class="f8 dim" x="64" y="134" text-anchor="middle">TH · JP · UK · AU</text>' +
+    '<text class="f8 dim" x="176" y="134" text-anchor="middle">US · CA · FR · DE</text>');
+
+  ILL.lines = svg('เปรียบเทียบเส้นกลางถนนสีเหลืองของอเมริกาเหนือกับเส้นสีขาวของยุโรป',
+    '<text class="th f8" x="14" y="19">สหรัฐฯ · แคนาดา: เส้นกลางสีเหลือง</text>' +
+    '<rect x="14" y="26" width="212" height="38" rx="5" fill="#1b2640"/>' +
+    '<path d="M14 30H226M14 60H226" stroke="#e9f2ff" stroke-opacity=".5"/>' +
+    '<path d="M14 43H226M14 47H226" stroke="#f5c518" stroke-width="1.8"/>' +
+    '<text class="th f8" x="14" y="82">หลายประเทศในยุโรป: เส้นกลางสีขาว</text>' +
+    '<rect x="14" y="89" width="212" height="38" rx="5" fill="#1b2640"/>' +
+    '<path d="M14 93H226M14 123H226" stroke="#e9f2ff" stroke-opacity=".5"/>' +
+    '<path d="M14 108H226" stroke="#e9f2ff" stroke-width="2" stroke-dasharray="12 9"/>');
+
+  ILL.bollard = svg('เสาข้างทางของฝรั่งเศส เยอรมนี โปแลนด์ และเสาไฟของญี่ปุ่น',
+    '<text class="th f8 dim" x="14" y="18">สีหัวเสาและแถบสะท้อนแสง</text>' +
+    '<path d="M10 112H230" stroke="#8296ba" stroke-opacity=".6"/>' +
+    post(42, '#e5484d', null) + post(96, '#14171f', null) + post(150, null, '#f5c518') +
+    '<rect x="199" y="34" width="6" height="78" fill="#6a7388"/><rect x="190" y="40" width="24" height="3" fill="#6a7388"/><rect x="199" y="80" width="6" height="14" fill="#f5c518"/>' +
+    '<text class="f8" x="42" y="124" text-anchor="middle">FR</text><text class="f8" x="96" y="124" text-anchor="middle">DE</text><text class="f8" x="150" y="124" text-anchor="middle">PL</text><text class="f8" x="202" y="124" text-anchor="middle">JP</text>' +
+    '<text class="th f7 dim" x="42" y="133" text-anchor="middle">หัวแดง</text><text class="th f7 dim" x="96" y="133" text-anchor="middle">หัวดำ</text><text class="th f7 dim" x="150" y="133" text-anchor="middle">แถบเหลือง</text><text class="th f7 dim" x="202" y="133" text-anchor="middle">เสาไฟ+แถบ</text>');
+
+  ILL.script = svg('ป้ายอักษรไทย ญี่ปุ่น และซีริลลิก พร้อมโดเมนท้ายเว็บ',
+    '<text class="th f8 dim" x="14" y="16">อักษรบนป้าย</text>' +
+    board(40, 'กรุงเทพฯ', 'Bangkok', 11) + board(120, '東京', 'Tokyo', 15) + board(200, 'Москва', 'Moskva', 11) +
+    '<text class="f8 dim" x="40" y="72" text-anchor="middle">TH</text><text class="f8 dim" x="120" y="72" text-anchor="middle">JP</text><text class="f8 dim" x="200" y="72" text-anchor="middle">RU</text>' +
+    '<text class="th f8 dim" x="14" y="88">โดเมนบนป้ายร้าน</text>' +
+    '<rect x="36" y="94" width="48" height="18" rx="9" fill="none" stroke="#e9f2ff" stroke-opacity=".6"/><text class="f11" x="60" y="107" text-anchor="middle">.th</text>' +
+    '<rect x="96" y="94" width="48" height="18" rx="9" fill="none" stroke="#e9f2ff" stroke-opacity=".6"/><text class="f11" x="120" y="107" text-anchor="middle">.jp</text>' +
+    '<rect x="156" y="94" width="48" height="18" rx="9" fill="none" stroke="#e9f2ff" stroke-opacity=".6"/><text class="f11" x="180" y="107" text-anchor="middle">.us</text>' +
+    '<text class="th f7 dim" x="14" y="130">รหัสโทร +66 ไทย · +81 ญี่ปุ่น · +1 สหรัฐฯ</text>');
+
+  ILL.plates = svg('ป้ายทะเบียนไทย ยุโรป สหราชอาณาจักร และญี่ปุ่น',
+    '<rect x="18" y="14" width="98" height="36" rx="4" fill="#f4f6fb"/>' +
+    '<text class="th dk" style="font-size:17px" x="67" y="36" text-anchor="middle">1กก 1234</text>' +
+    '<text class="th dk" style="font-size:6.5px" x="67" y="46" text-anchor="middle">กรุงเทพมหานคร</text>' +
+    '<text class="th f8 dim" x="67" y="63" text-anchor="middle">TH · อักษรไทย</text>' +
+    '<rect x="126" y="22" width="98" height="24" rx="3" fill="#f4f6fb"/><path d="M129 22h9v24h-9a3 3 0 0 1-3-3V25a3 3 0 0 1 3-3Z" fill="#2a54c8"/>' +
+    '<text class="dk" style="font-size:12px" x="182" y="39" text-anchor="middle">AB 123 CD</text>' +
+    '<text class="th f8 dim" x="175" y="63" text-anchor="middle">EU · แถบน้ำเงิน</text>' +
+    '<rect x="18" y="88" width="98" height="24" rx="3" fill="#f5c518"/>' +
+    '<text class="dk" style="font-size:13px" x="67" y="105" text-anchor="middle">AB12 CDE</text>' +
+    '<text class="th f8 dim" x="67" y="130" text-anchor="middle">UK · ป้ายหลังสีเหลือง</text>' +
+    '<rect x="148" y="78" width="54" height="40" rx="4" fill="#f4f6fb" stroke="#0b6b3a" stroke-width="1.5"/>' +
+    '<text class="th gn" style="font-size:8px" x="175" y="92" text-anchor="middle">品川 300</text>' +
+    '<text class="th gn" style="font-size:11.5px" x="175" y="110" text-anchor="middle">あ 12-34</text>' +
+    '<text class="th f8 dim" x="175" y="130" text-anchor="middle">JP · ทรงสั้น</text>');
+
+  ILL.car = svg('รถกูเกิลพร้อมเสาอากาศ ราวหลังคา กล้อง และท่อสน็อร์เกิล',
+    '<path d="M10 112H230" stroke="#8296ba" stroke-opacity=".6"/>' +
+    '<path d="M40 100V86Q40 78 48 76L84 72L98 56Q101 52 108 52H148Q156 52 160 58L172 72L196 76Q205 78 205 86V100Z" fill="#dfe7f6"/>' +
+    '<path d="M104 58H147L164 71H93Z" fill="#14203b"/>' +
+    '<circle cx="78" cy="100" r="12" fill="#0b1020" stroke="#aab7d3" stroke-width="1.5"/><circle cx="78" cy="100" r="4.5" fill="#aab7d3"/>' +
+    '<circle cx="168" cy="100" r="12" fill="#0b1020" stroke="#aab7d3" stroke-width="1.5"/><circle cx="168" cy="100" r="4.5" fill="#aab7d3"/>' +
+    '<rect x="122" y="30" width="3" height="22" fill="#8296ba"/><circle cx="123.5" cy="25" r="9" fill="#2c3a5e" stroke="#aab7d3"/><circle cx="123.5" cy="25" r="3" fill="#3dd6e8"/>' +
+    '<rect x="104" y="48.5" width="44" height="3" rx="1" fill="#9fb0cf"/><rect x="108" y="50" width="3" height="3" fill="#9fb0cf"/><rect x="141" y="50" width="3" height="3" fill="#9fb0cf"/>' +
+    '<path d="M96 56L86 28" stroke="#5cf2b0" stroke-width="1.6" stroke-linecap="round"/><circle cx="86" cy="28" r="2" fill="#5cf2b0"/>' +
+    '<path d="M178 76V47Q178 42 173 42H160" fill="none" stroke="#f08ad8" stroke-width="3.2" stroke-linecap="round"/>' +
+    '<text class="th f8" x="74" y="20" text-anchor="middle">เสาอากาศ</text>' +
+    '<text class="th f8" x="205" y="36" text-anchor="middle">สน็อร์เกิล</text><path d="M187 38L179 43" stroke="#f08ad8" stroke-width=".8"/>' +
+    '<text class="th f8" x="52" y="44" text-anchor="middle">ราวหลังคา</text><path d="M72 45L103 49" stroke="#9fb0cf" stroke-width=".8"/>' +
+    '<text class="th f8" x="160" y="22">กล้อง 360°</text><path d="M158 21H134" stroke="#9fb0cf" stroke-width=".8"/>' +
+    '<text class="th f8 dim" x="120" y="132" text-anchor="middle">ชิ้นส่วนบนรถต่างกันตามประเทศ</text>');
+
+  ILL.sun = svg('ตำแหน่งดวงอาทิตย์ในซีกโลกเหนือและซีกโลกใต้',
+    '<text class="th f9" x="64" y="14" text-anchor="middle">ซีกโลกเหนือ</text><text class="th f9" x="176" y="14" text-anchor="middle">ซีกโลกใต้</text>' +
+    '<path d="M14 96A50 50 0 0 1 114 96M126 96A50 50 0 0 1 226 96" fill="none" stroke="#a9bad6" stroke-opacity=".5" stroke-dasharray="3 4"/>' +
+    '<path d="M10 96H118M122 96H230" stroke="#8296ba" stroke-opacity=".7"/>' +
+    '<circle cx="64" cy="96" r="3" fill="#e9f2ff"/><circle cx="176" cy="96" r="3" fill="#e9f2ff"/>' +
+    sunAt(98, 60) + sunAt(142, 60) +
+    '<text class="f8" x="14" y="109" text-anchor="middle">N</text><text class="f8" x="114" y="109" text-anchor="middle">S</text>' +
+    '<text class="f8" x="126" y="109" text-anchor="middle">N</text><text class="f8" x="226" y="109" text-anchor="middle">S</text>' +
+    '<text class="th f8 dim" x="64" y="127" text-anchor="middle">ดวงอาทิตย์อยู่ทางใต้</text><text class="th f8 dim" x="176" y="127" text-anchor="middle">ดวงอาทิตย์อยู่ทางเหนือ</text>');
+
+  ILL.poles = svg('เปรียบเทียบเสาไฟฟ้าคอนกรีต เสาไม้มีคานขวาง และเสาที่มีแถบเหลือง',
+    '<text class="th f8 dim" x="14" y="18">วัสดุ · คานขวาง · การเดินสาย</text>' +
+    '<path d="M10 112H230" stroke="#8296ba" stroke-opacity=".6"/>' +
+    '<path d="M58 45Q78 58 98 44M142 44Q165 57 188 45" fill="none" stroke="#e9f2ff" stroke-opacity=".5"/>' +
+    '<rect x="34" y="40" width="12" height="72" fill="#aab3c4"/><rect x="34" y="40" width="5" height="72" fill="#8e98ad"/><rect x="22" y="44" width="36" height="3" fill="#5b6477"/>' +
+    '<circle cx="25" cy="43" r="2" fill="#e9f2ff"/><circle cx="40" cy="43" r="2" fill="#e9f2ff"/><circle cx="55" cy="43" r="2" fill="#e9f2ff"/>' +
+    '<rect x="116" y="34" width="8" height="78" fill="#8a6a4a"/><rect x="98" y="42" width="44" height="4" fill="#6f5238"/>' +
+    '<circle cx="102" cy="41" r="2" fill="#e9f2ff"/><circle cx="120" cy="41" r="2" fill="#e9f2ff"/><circle cx="138" cy="41" r="2" fill="#e9f2ff"/>' +
+    '<rect x="197" y="38" width="6" height="74" fill="#6a7388"/><rect x="188" y="44" width="24" height="3" fill="#6a7388"/><rect x="197" y="80" width="6" height="14" fill="#f5c518"/>' +
+    '<text class="th f8" x="40" y="124" text-anchor="middle">คอนกรีต</text><text class="th f8" x="120" y="124" text-anchor="middle">เสาไม้</text><text class="th f8" x="200" y="124" text-anchor="middle">แถบเหลือง</text>' +
+    '<text class="f7 dim" x="40" y="133" text-anchor="middle">TH</text><text class="th f7 dim" x="120" y="133" text-anchor="middle">ทั่วไป</text><text class="f7 dim" x="200" y="133" text-anchor="middle">JP</text>');
+
+  ILL.vegetation = svg('ต้นปาล์ม นาข้าว และเขาหินปูนริมทะเล',
+    '<path d="M10 112H230" stroke="#8296ba" stroke-opacity=".6"/>' +
+    '<path d="M40 112Q46 82 40 54" fill="none" stroke="#8a6a4a" stroke-width="4" stroke-linecap="round"/>' +
+    '<g fill="none" stroke="#5cf2b0" stroke-width="3" stroke-linecap="round"><path d="M40 54Q24 42 12 56"/><path d="M40 54Q28 34 18 38"/><path d="M40 54Q40 34 40 30"/><path d="M40 54Q52 34 62 38"/><path d="M40 54Q56 42 68 56"/></g>' +
+    '<circle cx="37" cy="58" r="2.4" fill="#8a6a4a"/><circle cx="43" cy="58" r="2.4" fill="#8a6a4a"/>' +
+    '<path d="M86 70H154L170 112H70Z" fill="#17453a"/>' +
+    '<g stroke="#5cf2b0" stroke-opacity=".7"><path d="M81.4 82H158.6M76.9 94H163.1M73.1 104H166.9"/></g>' +
+    '<path d="M178 112L184 62Q190 50 196 62L206 112Z" fill="#55627d"/><path d="M200 112L208 74Q214 64 220 76L226 112Z" fill="#3b4763"/>' +
+    '<rect x="164" y="108" width="66" height="8" fill="#3dd6e8" fill-opacity=".35"/>' +
+    '<text class="th f8" x="40" y="128" text-anchor="middle">ปาล์ม</text><text class="th f8" x="120" y="128" text-anchor="middle">นาข้าว</text><text class="th f8" x="198" y="130" text-anchor="middle">เขาหินปูน</text>');
+
+  ILL['c-th'] = flagArt('ธงชาติไทย', flagTH());
+  ILL['c-jp'] = flagArt('ธงชาติญี่ปุ่น', flagJP());
+  ILL['c-us'] = flagArt('ธงชาติสหรัฐอเมริกา', flagUS());
+
+  var META = [
+    { id: 'side', cat: 'ถนน', title: 'ฝั่งที่รถวิ่ง', hue: [160, 195, 270],
+      short: 'ไทยและญี่ปุ่นขับชิดซ้าย สหรัฐฯ และยุโรปส่วนใหญ่ขับชิดขวา',
+      blurb: 'ดูรถที่วิ่งผ่านหรือจอดอยู่ ตัดตัวเลือกได้ไปเกือบครึ่งโลกตั้งแต่ก้าวแรก',
+      items: ['ชิดซ้าย: ไทย ญี่ปุ่น สหราชอาณาจักร ออสเตรเลีย นิวซีแลนด์ อินเดีย แอฟริกาใต้', 'ชิดขวา: สหรัฐฯ แคนาดา และประเทศส่วนใหญ่ในยุโรป', 'ไม่มีรถให้ดู ลองดูป้าย รถที่จอด หรือตำแหน่งรถกูเกิลแทน'] },
+    { id: 'lines', cat: 'ถนน', title: 'เส้นบนถนน', hue: [45, 200, 260],
+      short: 'เส้นกลางเหลืองมักเป็นอเมริกาเหนือ เส้นขาวพบในยุโรปหลายประเทศ',
+      blurb: 'สี ความหนา และลายเส้น (ทึบหรือประ) เห็นได้แม้ภาพเป็นถนนล้วน',
+      items: ['สหรัฐฯ และแคนาดา: เส้นกลางสีเหลืองคั่นสองทิศทาง', 'ยุโรปหลายประเทศ: เส้นกลางสีขาว', 'ดูเส้นขอบถนนคู่กัน เพราะแต่ละประเทศมีข้อยกเว้น'] },
+    { id: 'bollard', cat: 'ข้างทาง', title: 'เสาข้างทาง', hue: [350, 160, 250],
+      short: 'ดูสีหัวเสาและแถบสะท้อนแสง ใช้แยกประเทศในยุโรปได้ดี',
+      blurb: 'บทความเมต้าเรียกว่าเบาะแสอันดับหนึ่งของยุโรป ให้ดูสีหัวเสาและแถบสะท้อนแสง',
+      items: ['ฝรั่งเศส: ขาว หัวแดง มีแถบสะท้อนแสง', 'เยอรมนี: ขาว หัวดำ', 'โปแลนด์: ขาว มีแถบสะท้อนแสงเหลือง', 'ญี่ปุ่น: ไม่มีเสาแบบนี้ แต่มีแถบสะท้อนแสงเหลืองบนเสาไฟ', 'บราซิล: ใช้หมุดกิโลเมตรลายลูกศรเหลืองแทน'] },
+    { id: 'script', cat: 'ป้าย', title: 'ตัวอักษรและโดเมน', hue: [165, 190, 280],
+      short: 'อักษรบนป้ายและท้ายโดเมนบอกประเทศได้เร็วที่สุด',
+      blurb: 'ตัวอักษรบนป้ายเป็นเบาะแสที่แรงที่สุด และโดเมนบนป้ายร้านบอกประเทศได้ตรงๆ',
+      items: ['อักษรไทย: ประเทศไทย ป้ายทางหลวงมักมีอังกฤษคู่กัน', 'ฮิรางานะและคาตากานะ: ญี่ปุ่น ส่วนคันจิล้วนอาจเป็นจีน ให้ดูบริบทด้วย', 'อักษรซีริลลิก: รัสเซียและประเทศใกล้เคียง', 'โดเมน .th .jp .us และรหัสโทร เช่น +66 +81 บนป้ายร้าน'] },
+    { id: 'plates', cat: 'ป้าย', title: 'ป้ายทะเบียน', hue: [50, 210, 270],
+      short: 'รูปทรงและสีของแผ่นป้ายสำคัญกว่าตัวเลข',
+      blurb: 'รูปทรงและสีสำคัญกว่าตัวเลข ถ้ามีรถในภาพให้ดูป้ายก่อน',
+      items: ['ไทย: พื้นขาว อักษรไทยนำหน้าตัวเลข เช่น 1กก 1234 มีชื่อจังหวัดใต้ตัวเลข', 'ยุโรป: แผ่นยาวสีขาว ในสหภาพยุโรปมีแถบน้ำเงินด้านซ้าย', 'สหราชอาณาจักร: ป้ายหลังสีเหลือง', 'ญี่ปุ่น: ป้ายสั้น ทรงเกือบสี่เหลี่ยมจัตุรัส'] },
+    { id: 'car', cat: 'รถกูเกิล', title: 'รถและกล้องของกูเกิล', hue: [300, 180, 250],
+      short: 'เสาอากาศ สน็อร์เกิล ราวหลังคา บอกภูมิภาคได้',
+      blurb: 'ชิ้นส่วนบนรถที่ติดมาในภาพบอกประเทศหรือภูมิภาคได้ แม้ไม่เห็นป้ายเลย',
+      items: ['สน็อร์เกิล: ประเทศที่ฝุ่นมาก เช่น เคนยา เซเนกัล ไนจีเรีย', 'เสาอากาศ: รัสเซีย มองโกเลีย', 'เงาราวหลังคา: อเมริกาเหนือ (สหรัฐฯ แคนาดา)', 'เงาสะท้อนบนแผงหน้ารถ: ไนจีเรีย โกตดิวัวร์'] },
+    { id: 'sun', cat: 'ธรรมชาติ', title: 'ตำแหน่งดวงอาทิตย์', hue: [40, 20, 270],
+      short: 'ใช้ตัดซีกโลกออก แต่ไม่แน่นอนในเขตร้อน',
+      blurb: 'ใช้ตัดซีกโลกออกได้ แต่ไม่ใช่ตัวตัดสิน',
+      items: ['ดวงอาทิตย์อยู่ทางใต้: น่าจะอยู่ซีกโลกเหนือ', 'ดวงอาทิตย์อยู่ทางเหนือ: น่าจะอยู่ซีกโลกใต้', 'ใกล้เส้นศูนย์สูตรและในเขตร้อน (รวมถึงไทย) ไม่แน่นอน ให้ใช้ตัดตัวเลือกร่วมกับเบาะแสอื่น'] },
+    { id: 'poles', cat: 'ข้างทาง', title: 'เสาไฟฟ้า', hue: [200, 155, 265],
+      short: 'ดูวัสดุ คานขวาง และการเดินสาย',
+      blurb: 'เห็นได้ในแทบทุกถนน ดูวัสดุ คานขวาง และการเดินสายไฟ',
+      items: ['ไทย: เสาคอนกรีตหน้าตัดสี่เหลี่ยม', 'ญี่ปุ่น: แถบสะท้อนแสงเหลืองบนเสาไฟ', 'ดูไฟจราจร (รูปทรง ตำแหน่ง เสา) ควบคู่กันด้วย'] },
+    { id: 'vegetation', cat: 'ธรรมชาติ', title: 'พืชและภูมิประเทศ', hue: [150, 180, 120],
+      short: 'ปาล์ม นาข้าว เขาหินปูน ช่วยบีบวงให้แคบลง',
+      blurb: 'ใช้ตัดตัวเลือกกว้างๆ ก่อนจะลงรายละเอียด',
+      items: ['ปาล์ม กล้วย และที่ราบนาข้าว: เขตร้อน เช่น ไทย', 'เขาหินปูนโผล่จากทะเลหรือที่ราบ: ภาคใต้ของไทยฝั่งอันดามัน', 'ดินแดงหรือเขาหิน ช่วยตัดทวีปและเขตภูมิอากาศ'] }
+  ];
+  var CTRY = [
+    { id: 'c-th', cat: 'ประเทศ · TH', title: 'ประเทศไทย', hue: [160, 200, 330],
+      blurb: 'เริ่มจากประเทศที่คุ้นที่สุด เมต้าหลักๆ มีดังนี้',
+      items: ['ขับชิดซ้าย', 'อักษรไทยบนป้ายร้าน ป้ายทางหลวงมักมีไทยคู่อังกฤษ (ไม่ใช่ทุกป้าย)', 'ป้ายทะเบียนรูปแบบ 1กก 1234', 'รถตุ๊กตุ๊ก และเสาไฟคอนกรีตหน้าตัดสี่เหลี่ยม', 'ป้ายริมทางโทนเหลืองแดงที่มีพระบรมฉายาลักษณ์', 'โดเมน .th .co.th และรหัสโทร +66'] },
+    { id: 'c-jp', cat: 'ประเทศ · JP', title: 'ญี่ปุ่น', hue: [350, 190, 260],
+      blurb: 'ขับชิดซ้ายเหมือนไทย แต่ตัวอักษรและรถต่างกันชัด',
+      items: ['ขับชิดซ้าย', 'อักษรญี่ปุ่นบนทุกป้าย (ฮิรางานะ คาตากานะ คันจิ)', 'รถ kei คันเล็ก และรถบรรทุกเล็กทรงสี่เหลี่ยม', 'ป้ายทะเบียนสั้น ทรงเกือบสี่เหลี่ยมจัตุรัส', 'แถบสะท้อนแสงเหลืองบนเสาไฟ', 'โดเมน .jp และรหัสโทร +81'] },
+    { id: 'c-us', cat: 'ประเทศ · US', title: 'สหรัฐอเมริกา', hue: [220, 350, 265],
+      blurb: 'ประเทศใหญ่ เบาะแสแยกตามรัฐ เริ่มจากสิ่งที่เหมือนกันทั้งประเทศ',
+      items: ['ขับชิดขวา เส้นกลางถนนสีเหลือง', 'ป้ายทะเบียนต่างกันตามรัฐ เช่นรูปแบบ ABC-1234 หรือ 1ABC234', 'ป้ายถนนใช้ฟอนต์สไตล์ Highway Gothic (สหรัฐฯ และแคนาดา)', 'เงาราวหลังคารถกูเกิลเห็นได้ในอเมริกาเหนือ', 'โดเมนบนป้ายมีทั้ง .com .us .gov .edu'] }
+  ];
+  var META_BY = {}, CTRY_BY = {};
+  META.forEach(function (t) { META_BY[t.id] = t; });
+  CTRY.forEach(function (t) { CTRY_BY[t.id] = t; });
+
+  var MAP_META = {
+    'world': ['bollard', 'car', 'side'],
+    'famous-places': ['script', 'side', 'sun'],
+    'community-world': ['bollard', 'plates', 'car'],
+    'wg-thailand': ['script', 'plates', 'poles'],
+    'wg-famous': ['script', 'sun', 'vegetation'],
+    'wg-completed': ['script', 'plates', 'car'],
+    'wg-sea': ['script', 'side', 'vegetation'],
+    'wg-eastern': ['script', 'side', 'poles'],
+    'wg-capitals': ['script', 'plates', 'side'],
+    'learnablemeta': ['bollard', 'plates', 'car'],
+    'geometas': ['bollard', 'side', 'car'],
+    'openguessr': ['side', 'script', 'sun']
+  };
+  var MAP_CTRY = { 'wg-thailand': 'c-th', 'wg-sea': 'c-th', 'wg-eastern': 'c-jp' };
+
+  function metaCard(t) {
+    return '<article class="mcard" id="m-' + t.id + '" style="' + hues(t) + '"><div class="ill">' + ILL[t.id] + '</div>' +
+      '<div class="mbody"><p class="plat mono">' + t.cat + '</p><h3>' + t.title + '</h3><p class="blurb">' + t.blurb + '</p>' +
+      '<ul class="mlist">' + t.items.map(function (x) { return '<li>' + x + '</li>'; }).join('') + '</ul></div></article>';
+  }
+  function renderMeta() {
+    $('#meta-grid').innerHTML = META.map(metaCard).join('');
+    $('#ctry-grid').innerHTML = CTRY.map(metaCard).join('');
+  }
+  function metaBlock(m) {
+    var ids = MAP_META[m.id]; if (!ids) return '';
+    var cards = ids.map(function (id) {
+      var t = META_BY[id];
+      return '<a class="mcard mini" href="#meta-' + id + '" style="' + hues(t) + '"><div class="ill">' + ILL[id] + '</div>' +
+        '<div class="mbody"><p class="plat mono">' + t.cat + '</p><h3>' + t.title + '</h3><p>' + t.short + '</p></div></a>';
+    }).join('');
+    var c = MAP_CTRY[m.id], link = '';
+    if (c) link = '<p class="mini-link">สรุปเมต้าของ <a href="#meta-' + c + '">' + CTRY_BY[c].title + '</a> ไว้ในที่เดียว →</p>';
+    return '<section class="more"><h2>เมต้าที่ควรดูในแมพนี้</h2><div class="mgrid">' + cards + '</div>' + link + '</section>';
+  }
+  function showMeta(key) {
+    detail.hidden = true; home.hidden = false; nf.hidden = true;
+    requestAnimationFrame(function () {
+      var el = key ? document.getElementById('m-' + key) : null;
+      (el || $('#meta-sec')).scrollIntoView({ block: 'start' });
+      if (el) { el.classList.add('flash'); setTimeout(function () { el.classList.remove('flash'); }, 1800); }
+    });
+  }
+
+  var FILTERS = [
+    { key: 'all', label: 'ทั้งหมด' },
+    { key: 'start', label: 'เริ่มที่นี่' },
+    { key: 'geoguessr', label: 'บน GeoGuessr' },
+    { key: 'free', label: 'เล่นฟรี' },
+    { key: 'asia', label: 'เอเชียและไทย' },
+    { key: 'learn', label: 'เรียนรู้เบาะแส' }
+  ];
+  var current = 'all';
+
+  function $(s, r) { return (r || document).querySelector(s); }
+
+  /* ---------- constellation thumbnail ---------- */
+  function seeded(str) {
+    var h = 2166136261;
+    for (var i = 0; i < str.length; i++) { h ^= str.charCodeAt(i); h = Math.imul(h, 16777619); }
+    return function () { h = Math.imul(h ^ (h >>> 15), 2246822507); h = Math.imul(h ^ (h >>> 13), 3266489909); h ^= h >>> 16; return (h >>> 0) / 4294967296; };
+  }
+  function thumb(m) {
+    var P = (m.pins || []).map(function (p) { return [(p[0] + 180) / 360 * 200, (90 - p[1]) / 180 * 100]; });
+    var x0 = 0, y0 = 0, w = 200, h = 100;
+    if (m.zoom && P.length) {
+      var xs = P.map(function (p) { return p[0]; }), ys = P.map(function (p) { return p[1]; });
+      var minx = Math.min.apply(null, xs), maxx = Math.max.apply(null, xs), miny = Math.min.apply(null, ys), maxy = Math.max.apply(null, ys);
+      w = Math.max(24, (maxx - minx) * 1.55, (maxy - miny) * 3.1);
+      h = w / 2;
+      x0 = (minx + maxx) / 2 - w / 2; y0 = (miny + maxy) / 2 - h / 2;
+    }
+    var stepDeg = w > 100 ? 30 : (w > 40 ? 10 : 5);
+    var step = stepDeg * 200 / 360, g = '', x, y;
+    for (x = Math.ceil(x0 / step) * step; x <= x0 + w + 0.001; x += step) g += '<line x1="' + x.toFixed(2) + '" y1="' + y0.toFixed(2) + '" x2="' + x.toFixed(2) + '" y2="' + (y0 + h).toFixed(2) + '"/>';
+    for (y = Math.ceil(y0 / step) * step; y <= y0 + h + 0.001; y += step) g += '<line x1="' + x0.toFixed(2) + '" y1="' + y.toFixed(2) + '" x2="' + (x0 + w).toFixed(2) + '" y2="' + y.toFixed(2) + '"/>';
+    var u = w / 200, rnd = seeded(m.id), dust = '', i;
+    for (i = 0; i < 22; i++) dust += '<circle class="dust" cx="' + (x0 + rnd() * w).toFixed(2) + '" cy="' + (y0 + rnd() * h * 0.7).toFixed(2) + '" r="' + ((0.25 + rnd() * 0.4) * u).toFixed(3) + '"/>';
+    var S = P.slice().sort(function (a, b) { return a[0] - b[0]; });
+    var line = S.length > 1 ? '<polyline class="link" points="' + S.map(function (p) { return p[0].toFixed(2) + ',' + p[1].toFixed(2); }).join(' ') + '"/>' : '';
+    var dots = P.map(function (p) {
+      return '<circle class="halo" cx="' + p[0].toFixed(2) + '" cy="' + p[1].toFixed(2) + '" r="' + (3.4 * u).toFixed(3) + '"/><circle class="pin" cx="' + p[0].toFixed(2) + '" cy="' + p[1].toFixed(2) + '" r="' + (1.3 * u).toFixed(3) + '"/>';
+    }).join('');
+    return '<svg viewBox="' + [x0, y0, w, h].map(function (n) { return n.toFixed(2); }).join(' ') + '" preserveAspectRatio="xMidYMid slice" aria-hidden="true" focusable="false">' +
+      '<g class="grat">' + g + '</g>' + dust + line + dots + '</svg>';
+  }
+
+  function hues(m) { return '--h1:' + m.hue[0] + ';--h2:' + m.hue[1] + ';--h3:' + m.hue[2]; }
+  function levelHTML(m) {
+    if (!m.level) return '<span class="badge-learn mono">เรียนรู้</span>';
+    var t = m.level === 1 ? 'เริ่มง่าย' : 'เริ่มท้าทาย', d = '';
+    for (var i = 1; i <= 3; i++) d += '<i class="' + (i <= m.level ? 'on' : '') + '"></i>';
+    return '<span class="pips mono" aria-label="ระดับ ' + m.level + ' จาก 3 ' + t + '">' + d + '<span class="lbl">' + t + '</span></span>';
+  }
+  function cardHTML(m) {
+    return '<a class="card" href="#map-' + m.id + '" style="' + hues(m) + '">' +
+      '<div class="thumb">' + thumb(m) + '</div>' +
+      '<div class="card-body">' +
+        '<div class="card-top"><span class="plat mono">' + PLAT[m.src] + '</span>' + levelHTML(m) + '</div>' +
+        '<h3>' + m.name + '</h3><p class="th">' + m.th + '</p><p class="blurb">' + m.blurb + '</p>' +
+        '<p class="stat mono">' + m.stat + ' →</p>' +
+      '</div></a>';
+  }
+
+  /* ---------- home ---------- */
+  function renderChips() {
+    $('#chips').innerHTML = FILTERS.map(function (f) {
+      var n = f.key === 'all' ? MAPS.length : MAPS.filter(function (m) { return m.tags.indexOf(f.key) > -1; }).length;
+      return '<button type="button" class="chip" data-f="' + f.key + '" aria-pressed="' + (f.key === current) + '">' + f.label + ' · ' + n + '</button>';
+    }).join('');
+  }
+  function renderGrid() {
+    var list = MAPS.filter(function (m) { return current === 'all' || m.tags.indexOf(current) > -1; });
+    $('#grid').innerHTML = list.map(cardHTML).join('');
+    $('#count').textContent = 'แสดง ' + list.length + ' จาก ' + MAPS.length + ' รายการ';
+  }
+  $('#chips').addEventListener('click', function (e) {
+    var b = e.target.closest('.chip'); if (!b) return;
+    current = b.getAttribute('data-f'); renderChips(); renderGrid();
+  });
+  $('#go-grid').addEventListener('click', function () { $('#grid-sec').scrollIntoView({ block: 'start' }); });
+  $('#go-meta').addEventListener('click', function () { $('#meta-sec').scrollIntoView({ block: 'start' }); });
+
+  /* ---------- detail ---------- */
+  function detailHTML(m) {
+    var kind = m.level ? 'แมพ' : 'แหล่งเรียนรู้';
+    var cta2 = m.url2 ? '<a class="btn" href="' + m.url2 + '" target="_blank" rel="noopener noreferrer">' + (m.cta2 || 'ดูเพิ่มเติม') + ' ↗</a>' : '';
+    var facts = m.facts.map(function (f) { return '<div><dt>' + f[0] + '</dt><dd>' + f[1] + '</dd></div>'; }).join('');
+    var tips = m.tips.map(function (t) { return '<li>' + t + '</li>'; }).join('');
+    var note = m.note ? '<div class="note"><span class="mono">หมายเหตุ</span><p>' + m.note + '</p></div>' : '';
+    var more = m.next.map(function (id) { return BY[id] ? cardHTML(BY[id]) : ''; }).join('');
+    var mb = metaBlock(m);
+    return '<a class="back" href="#all">← ทุกแมพ</a>' +
+      '<article style="' + hues(m) + '">' +
+        '<div class="d-thumb"><div class="thumb">' + thumb(m) + '</div></div>' +
+        '<div class="d-head"><p class="eyebrow mono">' + PLAT[m.src] + ' · ' + kind + ' · ' + levelText(m) + '</p><h1 tabindex="-1" id="d-title">' + m.name + '</h1><p class="sub">' + m.th + '</p></div>' +
+        '<div class="cta-row"><a class="btn primary" href="' + m.url + '" target="_blank" rel="noopener noreferrer">' + m.cta + ' ↗</a>' + cta2 + '<button type="button" class="btn" id="copy-url">คัดลอกลิงก์</button></div>' +
+        '<div class="urlline"><span>ลิงก์:</span><code id="url-code">' + m.url + '</code></div>' +
+        '<div class="d-grid">' +
+          '<div class="d-main"><h2>ทำไมเหมาะกับมือใหม่</h2><p>' + m.why + '</p><h2>ลองเล่นแบบนี้</h2><ul class="tips">' + tips + '</ul>' + note + '</div>' +
+          '<aside class="d-side"><h2>ข้อมูล</h2><dl>' + facts + '</dl></aside>' +
+        '</div>' +
+        mb + '<section class="more"><h2>เล่นต่อได้ที่</h2><div class="grid">' + more + '</div></section>' +
+      '</article>';
+  }
+  function levelText(m) { return m.level === 1 ? 'ระดับเริ่มง่าย' : (m.level === 2 ? 'ระดับเริ่มท้าทาย' : 'ฝึกเสริม'); }
+
+  function wireCopy(m) {
+    var btn = $('#copy-url'), code = $('#url-code'); if (!btn) return;
+    btn.addEventListener('click', function () {
+      function fallback() {
+        try { var r = document.createRange(); r.selectNodeContents(code); var s = getSelection(); s.removeAllRanges(); s.addRange(r); } catch (e) {}
+        btn.textContent = 'เลือกลิงก์แล้ว กดคัดลอกเอง';
+      }
+      try {
+        navigator.clipboard.writeText(m.url).then(function () { btn.textContent = 'คัดลอกแล้ว'; }, fallback);
+      } catch (e) { fallback(); }
+      setTimeout(function () { btn.textContent = 'คัดลอกลิงก์'; }, 2400);
+    });
+  }
+
+  /* ---------- router: every hash resolves to a real view, so there is no 404 ---------- */
+  var home = $('#view-home'), detail = $('#view-detail'), nf = $('#nf'), first = true;
+  function showHome(notFound) {
+    detail.hidden = true; home.hidden = false; nf.hidden = !notFound;
+    if (location.hash === '#all' || notFound) { requestAnimationFrame(function () { $('#grid-sec').scrollIntoView({ block: 'start' }); }); }
+    else if (!first) { window.scrollTo(0, 0); }
+  }
+  function showDetail(m) {
+    home.hidden = true; detail.hidden = false;
+    detail.innerHTML = detailHTML(m);
+    wireCopy(m);
+    window.scrollTo(0, 0);
+    var h = $('#d-title'); if (h) { try { h.focus({ preventScroll: true }); } catch (e) { h.focus(); } }
+  }
+  function route() {
+    var h = location.hash.replace(/^#/, '');
+    if (h === 'meta' || h.indexOf('meta-') === 0) {
+      showMeta(h === 'meta' ? '' : h.slice(5));
+    } else if (h.indexOf('map-') === 0) {
+      var m = BY[h.slice(4)];
+      if (m) showDetail(m); else showHome(true);
+    } else { showHome(false); }
+    first = false;
+  }
+  window.addEventListener('hashchange', route);
+
+  renderChips(); renderGrid(); renderMeta(); route();
+
+  /* ---------- stars ---------- */
+  (function () {
+    var c = $('#stars'); if (!c || !c.getContext) return;
+    var ctx = c.getContext('2d'), w = 0, h = 0, stars = [], raf = 0;
+    var reduce = window.matchMedia && matchMedia('(prefers-reduced-motion: reduce)').matches;
+    function draw(t) {
+      ctx.clearRect(0, 0, w, h);
+      ctx.fillStyle = '#dbe8ff';
+      for (var i = 0; i < stars.length; i++) {
+        var s = stars[i];
+        ctx.globalAlpha = 0.3 + 0.55 * (reduce ? 0.6 : 0.5 + 0.5 * Math.sin(t / 1000 * s.s + s.p));
+        ctx.beginPath(); ctx.arc(s.x, s.y, s.r, 0, 6.2832); ctx.fill();
+      }
+      if (!reduce) raf = requestAnimationFrame(draw);
+    }
+    function size() {
+      var dpr = Math.min(window.devicePixelRatio || 1, 2);
+      w = window.innerWidth; h = window.innerHeight;
+      c.width = Math.round(w * dpr); c.height = Math.round(h * dpr);
+      ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+      var n = Math.min(240, Math.round(w * h / 8000)); stars = [];
+      for (var i = 0; i < n; i++) stars.push({ x: Math.random() * w, y: Math.random() * h * 0.92, r: 0.3 + Math.random() * 1.0, p: Math.random() * 6.28, s: 0.4 + Math.random() * 1.3 });
+      cancelAnimationFrame(raf); draw(0);
+    }
+    size();
+    var tm; window.addEventListener('resize', function () { clearTimeout(tm); tm = setTimeout(size, 150); });
+  })();
+})();
+</script>
+</body>
+</html>
